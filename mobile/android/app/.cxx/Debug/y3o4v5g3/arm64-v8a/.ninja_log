@@ -1,0 +1,26 @@
+# ninja log v5
+44594	45006	8111714518987477	D:/down/app/mobile/android/app/build/intermediates/cxx/Debug/y3o4v5g3/obj/arm64-v8a/libappmodules.so	c350608a0b478248
+6	87	0	D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/CMakeFiles/cmake.verify_globs	e442620f0d9134af
+79	27441	8111714342924306	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/ComponentDescriptors.cpp.o	8d3756f464a153d4
+114	19005	8111714255894326	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/RNKeychainSpecJSI-generated.cpp.o	f9bd8b9f5c320364
+149	18203	8111714251003309	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/States.cpp.o	a0a5b168eec59f5a
+56	19024	8111714257804995	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/RNKeychainSpec-generated.cpp.o	1b64476d0702cfb8
+132	21451	8111714282885955	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/EventEmitters.cpp.o	d16661920ec6867d
+26740	35025	8111714418655628	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/edc7e32e0de36b33158d13afac0ab334/codegen/jni/react/renderer/components/safeareacontext/EventEmitters.cpp.o	bec4806903a6cd1f
+166	26737	8111714335671923	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/ShadowNodes.cpp.o	68a58fb594baedd0
+27443	34059	8111714409407084	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/3b9af3923eea1d5de13ab5279b423ee7/source/codegen/jni/react/renderer/components/safeareacontext/States.cpp.o	2c353e3463e527b6
+39	29521	8111714363949894	CMakeFiles/appmodules.dir/OnLoad.cpp.o	36f58f92b9fe16c7
+97	34364	8111714412259475	RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir/react/renderer/components/RNKeychainSpec/Props.cpp.o	26069016e39dd0b4
+19028	35601	8111714424668923	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/edc7e32e0de36b33158d13afac0ab334/codegen/jni/react/renderer/components/safeareacontext/ShadowNodes.cpp.o	c8bee4fc9ca7401d
+42405	44593	8111714514803699	D:/down/app/mobile/android/app/build/intermediates/cxx/Debug/y3o4v5g3/obj/arm64-v8a/libreact_codegen_safeareacontext.so	e7aa5dfc5c537ad0
+18332	38695	8111714455463275	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/ea870f958b408c0e3f8419f8863f7da8/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.cpp.o	10d7624d665bf910
+34060	42404	8111714478078342	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/be2059fb6f1b412ca78226434fc6aba3/android/build/generated/source/codegen/jni/safeareacontext-generated.cpp.o	5ee6ec99430eaf9c
+19008	39958	8111714463882764	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/ef5c9fb9e0f1afacd70c434dd305968c/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp.o	fae12c3ef7f465c9
+29522	40153	8111714469148984	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/55dcb44cfd223984874ebd8ce2674a61/react/renderer/components/safeareacontext/safeareacontextJSI-generated.cpp.o	1bca9c871aaccf06
+21454	40161	8111714469379012	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/3b9af3923eea1d5de13ab5279b423ee7/source/codegen/jni/react/renderer/components/safeareacontext/Props.cpp.o	e558c0996ebb29fb
+182	40763	8111714476344060	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/dc7255dcbb6d469a2a1c213363518c88/jni/react/renderer/components/safeareacontext/ComponentDescriptors.cpp.o	8d4f5e8c77304fb4
+2	42563	8111714493589116	CMakeFiles/appmodules.dir/D_/down/app/mobile/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	e13bfe6b60bbdb7a
+2	473	0	D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/CMakeFiles/cmake.verify_globs	e442620f0d9134af
+303	14357	8111797089877164	CMakeFiles/appmodules.dir/OnLoad.cpp.o	36f58f92b9fe16c7
+332	24640	8111797192373249	CMakeFiles/appmodules.dir/D_/down/app/mobile/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	e13bfe6b60bbdb7a
+24642	27117	8111797217852875	D:/down/app/mobile/android/app/build/intermediates/cxx/Debug/y3o4v5g3/obj/arm64-v8a/libappmodules.so	c350608a0b478248

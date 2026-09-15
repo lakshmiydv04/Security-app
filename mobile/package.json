@@ -1,0 +1,55 @@
+{
+  "name": "guardian-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monitored-device app for the consent-driven family safety platform",
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
+    "test": "vitest run --config vitest.config.mts",
+    "android:fast": "react-native run-android --active-arch-only",
+    "adb:reverse": "node scripts/adb-reverse.mjs"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.5.0",
+    "react": "18.3.1",
+    "react-native": "0.76.5",
+    "react-native-geolocation-service": "^5.3.1",
+    "react-native-keychain": "^9.2.2",
+    "react-native-safe-area-context": "^5.1.0",
+    "react-native-vision-camera": "^4.6.3",
+    "react-native-webrtc": "^124.0.8",
+    "react-redux": "^9.2.0",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/runtime": "^7.26.0",
+    "@react-native-community/cli": "^15.0.1",
+    "@react-native-community/cli-platform-android": "^15.0.1",
+    "@react-native-community/cli-platform-ios": "^15.0.1",
+    "@react-native/babel-preset": "0.76.5",
+    "@react-native/eslint-config": "0.76.5",
+    "@react-native/metro-config": "0.76.5",
+    "@react-native/typescript-config": "0.76.5",
+    "@types/react": "^18.3.18",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "typescript": "5.0.4",
+    "vite": "^8.0.0",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "overrides": {
+    "@react-native-community/cli-server-api": "^15.0.0",
+    "@react-native-community/cli-tools": "^15.0.0"
+  }
+}

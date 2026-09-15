@@ -1,0 +1,9 @@
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/CMakeFiles/appmodules.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/CMakeFiles/rebuild_cache.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/Debug/y3o4v5g3/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir

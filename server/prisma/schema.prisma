@@ -1,0 +1,320 @@
+// Consent-driven family safety platform - data model.
+//
+// Two invariants shape this schema and should survive any future change:
+//
+//   1. Privacy state is stored HERE, on the server, not only on the device.
+//      The device's local toggle is a latency optimisation; this table is the
+//      enforcement point. See src/domain/privacy.ts.
+//
+//   2. There is deliberately NO column anywhere that can suppress the activity
+//      indicator or the audit log. A guardian on the strictest tier can lock a
+//      channel on, but cannot make that fact invisible. Adding such a column
+//      would convert this product into stalkerware.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum PairingStatus {
+  PENDING // monitored user redeemed the code; awaiting guardian confirmation
+  ACTIVE
+  REVOKED
+}
+
+/// Determines who may hold the kill switch.
+///
+/// SELF_MANAGED     - the monitored user holds an unconditional kill switch.
+///                    The guardian can never lock a channel on. Default, and
+///                    the only tier permitted for users 13 and over.
+/// GUARDIAN_MANAGED - the guardian may lock a channel on (young children).
+///                    The indicator and the audit trail remain fully active
+///                    and non-suppressible; SOS is always available.
+enum PairingTier {
+  SELF_MANAGED
+  GUARDIAN_MANAGED
+}
+
+enum PrivacyChannel {
+  LOCATION
+  CAMERA
+  MICROPHONE
+}
+
+enum SensorKind {
+  CAMERA
+  MICROPHONE
+}
+
+enum SensorSessionStatus {
+  REQUESTED
+  DENIED
+  ACTIVE
+  ENDED
+}
+
+enum GeofenceEventType {
+  ENTER
+  EXIT
+}
+
+enum ActorRole {
+  GUARDIAN
+  MONITORED
+  SYSTEM
+}
+
+enum AuditOutcome {
+  ALLOWED
+  DENIED
+  INFO
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  mfaSecret    String?
+  mfaEnabled   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  /// The master kill switch, held by the monitored person.
+  /// When true, EVERY channel on EVERY pairing is refused, regardless of
+  /// per-pairing toggles, tier, or guardian locks. Nothing overrides this.
+  masterShieldActive    Boolean   @default(false)
+  masterShieldUpdatedAt DateTime?
+
+  devices          Device[]
+  guardianPairings Pairing[]        @relation("GuardianPairings")
+  monitoredPairing Pairing[]        @relation("MonitoredPairings")
+  invitesCreated   PairingInvite[]
+  refreshTokens    RefreshToken[]
+  sosAlerts        SosAlert[]
+
+  @@map("users")
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  userId     String
+  platform   Platform
+  label      String
+  pushToken  String?
+  appVersion String?
+  lastSeenAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("devices")
+}
+
+/// Short-lived code a guardian generates and the monitored user redeems.
+/// Only the hash is stored, and it is single-use.
+model PairingInvite {
+  id         String    @id @default(uuid())
+  guardianId String
+  codeHash   String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  guardian User @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@index([guardianId])
+  @@map("pairing_invites")
+}
+
+model Pairing {
+  id              String        @id @default(uuid())
+  guardianId      String
+  monitoredUserId String
+  status          PairingStatus @default(PENDING)
+  tier            PairingTier   @default(SELF_MANAGED)
+  label           String?
+  createdAt       DateTime      @default(now())
+  activatedAt     DateTime?
+  revokedAt       DateTime?
+  /// Who pulled the plug. A monitored user may revoke unilaterally.
+  revokedByUserId String?
+  revokeReason    String?
+
+  guardian       User            @relation("GuardianPairings", fields: [guardianId], references: [id], onDelete: Cascade)
+  monitoredUser  User            @relation("MonitoredPairings", fields: [monitoredUserId], references: [id], onDelete: Cascade)
+  privacyState   PrivacyState?
+  geofences      GeofenceZone[]
+  geofenceEvents GeofenceEvent[]
+  locationPings  LocationPing[]
+  sensorSessions SensorSession[]
+  sosAlerts      SosAlert[]
+
+  @@unique([guardianId, monitoredUserId])
+  @@index([monitoredUserId])
+  @@map("pairings")
+}
+
+/// The authoritative privacy state. This is what the server checks before
+/// routing any command or minting any media token.
+model PrivacyState {
+  id                String   @id @default(uuid())
+  pairingId         String   @unique
+  locationEnabled   Boolean  @default(true)
+  cameraEnabled     Boolean  @default(false)
+  microphoneEnabled Boolean  @default(false)
+
+  /// Channels the guardian has locked on. Only meaningful on
+  /// GUARDIAN_MANAGED pairings; ignored (and rejected on write) otherwise.
+  guardianLockedChannels PrivacyChannel[] @default([])
+
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String?
+
+  pairing Pairing @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+
+  @@map("privacy_states")
+}
+
+model GeofenceZone {
+  id              String   @id @default(uuid())
+  pairingId       String
+  name            String
+  centerLat       Float
+  centerLng       Float
+  radiusMeters    Int
+  notifyOnEnter   Boolean  @default(true)
+  notifyOnExit    Boolean  @default(true)
+  active          Boolean  @default(true)
+  createdByUserId String
+  createdAt       DateTime @default(now())
+
+  pairing Pairing         @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+  events  GeofenceEvent[]
+
+  @@index([pairingId])
+  @@map("geofence_zones")
+}
+
+model GeofenceEvent {
+  id         String            @id @default(uuid())
+  zoneId     String
+  pairingId  String
+  type       GeofenceEventType
+  lat        Float
+  lng        Float
+  occurredAt DateTime          @default(now())
+
+  zone    GeofenceZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  pairing Pairing      @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+
+  @@index([pairingId, occurredAt])
+  @@map("geofence_events")
+}
+
+model LocationPing {
+  id             String   @id @default(uuid())
+  pairingId      String
+  lat            Float
+  lng            Float
+  accuracyMeters Float?
+  capturedAt     DateTime
+  receivedAt     DateTime @default(now())
+  /// Set from LOCATION_RETENTION_DAYS. Swept by the retention job.
+  expiresAt      DateTime
+
+  pairing Pairing @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+
+  @@index([pairingId, capturedAt])
+  @@index([expiresAt])
+  @@map("location_pings")
+}
+
+model SensorSession {
+  id                String              @id @default(uuid())
+  pairingId         String
+  kind              SensorKind
+  status            SensorSessionStatus @default(REQUESTED)
+  /// SFU room identifier. Only populated once the privacy gate has passed.
+  roomName          String?
+  requestedByUserId String
+  requestedAt       DateTime            @default(now())
+  startedAt         DateTime?
+  endedAt           DateTime?
+  denialReason      String?
+
+  pairing Pairing @relation(fields: [pairingId], references: [id], onDelete: Cascade)
+
+  @@index([pairingId, requestedAt])
+  @@map("sensor_sessions")
+}
+
+model SosAlert {
+  id                   String    @id @default(uuid())
+  monitoredUserId      String
+  pairingId            String?
+  lat                  Float?
+  lng                  Float?
+  accuracyMeters       Float?
+  triggeredAt          DateTime  @default(now())
+  acknowledgedAt       DateTime?
+  acknowledgedByUserId String?
+
+  monitoredUser User     @relation(fields: [monitoredUserId], references: [id], onDelete: Cascade)
+  pairing       Pairing? @relation(fields: [pairingId], references: [id], onDelete: SetNull)
+
+  @@index([monitoredUserId, triggeredAt])
+  @@map("sos_alerts")
+}
+
+model RefreshToken {
+  id                String    @id @default(uuid())
+  userId            String
+  tokenHash         String    @unique
+  /// Rotation family. Reuse of a rotated token revokes the whole family.
+  familyId          String
+  issuedAt          DateTime  @default(now())
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+/// Append-only, hash-chained audit trail, readable by BOTH parties.
+///
+/// Immutability is enforced at the database level by prisma/sql/001_audit_immutability.sql
+/// (REVOKE UPDATE/DELETE from the app role + a blocking trigger). The hash
+/// chain makes any tampering that bypasses those detectable.
+model AuditEvent {
+  seq         BigInt          @id @default(autoincrement())
+  pairingId   String?
+  actorUserId String?
+  actorRole   ActorRole
+  action      String
+  channel     PrivacyChannel?
+  outcome     AuditOutcome
+  reason      String?
+  metadata    Json?
+  occurredAt  DateTime        @default(now())
+  prevHash    String
+  hash        String          @unique
+
+  @@index([pairingId, seq])
+  @@map("audit_events")
+}

@@ -1,0 +1,13 @@
+<resources>
+
+    <!-- Base theme. DayNight follows the system dark-mode setting without us
+         shipping a second colour set.
+
+         Do NOT re-add the editTextBackground item that React Native's own
+         template carries. RN 0.76.5 ships no drawable resources at all, so
+         that reference fails resource linking at processDebugResources. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/guardian_navy</item>
+    </style>
+
+</resources>

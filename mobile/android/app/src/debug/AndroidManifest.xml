@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Debug builds only. Metro and the development API server both speak
+         plain HTTP, and targetSdk 34 blocks cleartext by default - without
+         this the app cannot even load its JS bundle on a real device.
+         Release builds do NOT inherit this: they keep the secure default. -->
+    <application
+        android:usesCleartextTraffic="true"
+        tools:targetApi="28" />
+
+</manifest>

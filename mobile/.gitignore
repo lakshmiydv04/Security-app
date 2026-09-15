@@ -1,0 +1,12 @@
+node_modules/
+.rn-template/
+*.log
+.env
+ios/Pods/
+ios/build/
+android/.gradle/
+android/app/build/
+android/build/
+
+# Machine-specific Android SDK path - never commit.
+android/local.properties
