@@ -17,7 +17,23 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+
+  // Runtime connection. On Supabase this is the TRANSACTION pooler (port 6543),
+  // which must carry ?pgbouncer=true - PgBouncer in transaction mode cannot
+  // hold Prisma's prepared statements between queries, and without that flag
+  // you get intermittent "prepared statement already exists" failures under
+  // load rather than a clean error you can act on.
+  url = env("DATABASE_URL")
+
+  // Schema changes bypass the pooler entirely and use a direct session
+  // connection (port 5432).
+  //
+  // This is why deploys were hanging: prisma migrate takes a session-level
+  // advisory lock, and a transaction-mode pooler gives every statement a
+  // different backend, so the lock is taken on one connection and waited for
+  // on another. It never resolves and never errors - it just sits there. The
+  // same applies to `npm run db:harden`, which creates triggers.
+  directUrl = env("DIRECT_URL")
 }
 
 enum Platform {

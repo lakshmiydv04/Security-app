@@ -6,7 +6,8 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { prisma } from '../lib/db.js';
+import { PrismaClient } from '@prisma/client';
+import { prisma as defaultPrisma } from '../lib/db.js';
 import { loadEnv } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
 import { splitSqlStatements } from '../lib/sql-statements.js';
@@ -16,6 +17,26 @@ const sqlDir = join(here, '..', '..', 'prisma', 'sql');
 
 /** Triggers the preflight check expects to find on audit_events. */
 const REQUIRED_TRIGGERS = 3;
+
+/**
+ * Which database to harden.
+ *
+ * HARDEN_DATABASE_URL exists because setting $env:DATABASE_URL does NOT work
+ * for this script. lib/env.ts deliberately loads .env with override:true in
+ * development - so a stale DATABASE_URL in the Windows environment cannot
+ * silently beat the file you are editing - which means the reverse is also
+ * true: a shell variable cannot beat .env either. Anyone pointing this at a
+ * production database from their own machine would have quietly hardened
+ * their LOCAL one instead and seen a perfectly successful run.
+ *
+ * This name is not in the schema, so nothing overrides it. Use the DIRECT
+ * connection (port 5432 on Supabase): this creates triggers, and DDL through
+ * a transaction-mode pooler is the same trap that hangs prisma migrate.
+ */
+const overrideUrl = process.env.HARDEN_DATABASE_URL?.trim();
+const prisma = overrideUrl
+  ? new PrismaClient({ datasources: { db: { url: overrideUrl } } })
+  : defaultPrisma;
 
 /**
  * Run a SQL script one statement at a time.
@@ -43,6 +64,21 @@ async function runScript(label: string, sql: string): Promise<number> {
 
 async function main(): Promise<void> {
   const env = loadEnv();
+
+  // Say which database is about to be changed. Hardening the wrong one and
+  // believing otherwise is the failure this line exists to prevent.
+  const target = overrideUrl ?? env.DATABASE_URL;
+  let described = "(unparseable)";
+  try {
+    const parsed = new URL(target);
+    described = `${parsed.hostname}:${parsed.port || "5432"}${parsed.pathname}`;
+  } catch {
+    /* leave as unparseable */
+  }
+  logger.info(
+    { database: described, source: overrideUrl ? "HARDEN_DATABASE_URL" : ".env DATABASE_URL" },
+    "hardening this database",
+  );
 
   const triggerSql = await readFile(join(sqlDir, '001_audit_immutability.sql'), 'utf8');
   logger.info(
