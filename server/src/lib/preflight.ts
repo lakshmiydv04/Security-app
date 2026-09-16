@@ -30,22 +30,73 @@ function redact(url: string): string {
   return url.replace(/(:\/\/[^:@/]+:)[^@]*(@)/, '$1****$2');
 }
 
+/**
+ * Advice that fits the connection actually being attempted.
+ *
+ * This used to print "check the postgresql-x64 service in Windows Services"
+ * regardless of context, which on a cloud host is not merely unhelpful - it
+ * sends someone looking at the wrong machine entirely. An error message that
+ * confidently misdirects is worse than a terse one.
+ */
+function reachabilityAdvice(url: string, underlying: string): string[] {
+  let host = '';
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    /* unparseable: fall through to the generic advice */
+  }
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+  // PgBouncer in transaction mode routes each query to a different backend, so
+  // a prepared statement created on one connection is not there on the next.
+  // Postgres reports the collision without naming either the cause or the cure.
+  if (/42P05/.test(underlying) || /prepared statement .* already exists/i.test(underlying)) {
+    return [
+      'This is a connection-pooler problem, not a credentials one.',
+      '',
+      'The pooler is in transaction mode, so every query can land on a',
+      'different backend connection and Prisma\'s prepared statements collide',
+      'with themselves.',
+      '',
+      'Append this to DATABASE_URL, then redeploy:',
+      '  ?pgbouncer=true&connection_limit=1',
+    ];
+  }
+
+  if (isLocal) {
+    return [
+      'Check, in order:',
+      '  1. The postgresql-x64-* service is running in Windows Services.',
+      '  2. The password in .env matches the postgres role.',
+      '  3. The database exists:',
+      '       psql -U postgres -c "CREATE DATABASE guardian_db;"',
+    ];
+  }
+
+  return [
+    'Check, in order:',
+    '  1. DATABASE_URL is set on the host, and points at a POOLER address.',
+    '     Supabase\'s db.<ref>.supabase.co is IPv6-only on plans without the',
+    '     IPv4 add-on, and most hosts have no IPv6 route to it.',
+    '  2. Reserved characters in the password are percent-encoded',
+    '     (# / ? @ : become %23 %2F %3F %40 %3A).',
+    '  3. The database allows connections from this host.',
+  ];
+}
+
 async function assertReachable(): Promise<void> {
   try {
     await prisma.$queryRaw`SELECT 1`;
   } catch (err) {
     const url = process.env.DATABASE_URL ?? '(unset)';
+    const underlying = String((err as Error)?.message ?? err);
     throw new PreflightError(
       box('Cannot reach the database', [
         `Tried: ${redact(url)}`,
         '',
-        'Check, in order:',
-        '  1. The postgresql-x64-* service is running in Windows Services.',
-        '  2. The password in .env matches the postgres role.',
-        '  3. The database exists:',
-        '       psql -U postgres -c "CREATE DATABASE guardian_db;"',
+        ...reachabilityAdvice(url, underlying),
         '',
-        `Underlying error: ${String((err as Error)?.message ?? err).split('\n')[0]}`,
+        `Underlying error: ${underlying.split('\n').filter(Boolean).slice(-1)[0] ?? underlying}`,
       ]),
     );
   }
