@@ -111,6 +111,13 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+    // WorkManager: reliable periodic re-scheduling for the safety foreground
+    // service. It gives us a health-check that restarts the service (under its
+    // visible notification) if the OS has killed it, and it self-registers its
+    // own components + WAKE_LOCK via manifest merge. Bump freely; 2.9.x is the
+    // stable line compatible with this AGP/compileSdk.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

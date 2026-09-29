@@ -27,6 +27,7 @@ import { ensureLocationPermission, getCurrentPosition, hasLocationPermission } f
 import { MasterShieldCard } from '../components/MasterShieldCard';
 import { PrivacyToggle } from '../components/PrivacyToggle';
 import { SosButton } from '../components/SosButton';
+import { BatteryOptimizationCard } from '../components/BatteryOptimizationCard';
 import { theme } from '../theme';
 import type { PrivacyChannel } from '../api/types';
 
@@ -306,6 +307,11 @@ export function PrivacyControlScreen({ onRefresh, onAddConnection }: Props): Rea
             </Pressable>
           </>
         ) : null}
+
+        {/* Device-wide reliability: keeps the disclosed service alive under
+            aggressive OEM battery managers. Shown regardless of the active
+            pairing, and renders nothing on iOS. */}
+        <BatteryOptimizationCard />
 
         <Pressable
           style={styles.secondaryInline}

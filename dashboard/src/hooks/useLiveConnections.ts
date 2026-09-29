@@ -44,7 +44,14 @@ export function useLiveConnections(accessToken: string | null): LiveState {
     };
   }, []);
 
-  const refresh = useCallback(async () => {
+  const refreshInFlight = useRef<Promise<void> | null>(null);
+
+  // Coalesce refreshes. onConnectionChange fires on every socket (re)connect
+  // and the effect below also refreshes, so a flaky link used to fire a storm
+  // of full 1+2N refetches at a cold Render instance - a big reason the UI felt
+  // stuck after a click. An in-flight refresh is shared, not duplicated; the
+  // data it returns is still current.
+  const refreshImpl = useCallback(async () => {
     try {
       const { pairings: list } = await pairingApi.list();
       if (!mounted.current) return;
@@ -98,6 +105,15 @@ export function useLiveConnections(accessToken: string | null): LiveState {
       if (mounted.current) setLoading(false);
     }
   }, []);
+
+  const refresh = useCallback((): Promise<void> => {
+    if (refreshInFlight.current) return refreshInFlight.current;
+    const run = refreshImpl().finally(() => {
+      refreshInFlight.current = null;
+    });
+    refreshInFlight.current = run;
+    return run;
+  }, [refreshImpl]);
 
   useEffect(() => {
     if (!accessToken) {

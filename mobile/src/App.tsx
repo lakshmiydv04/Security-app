@@ -125,25 +125,40 @@ function Root(): React.JSX.Element {
     return store.subscribe(guard);
   }, [endStream]);
 
+  // Coalesce concurrent refreshes. The socket fires onConnectionChange on
+  // every (re)connect and the effect below also refreshes, so on a flaky
+  // network this used to fire a storm of full 1+2N refetches at a cold Render
+  // instance - a big part of why the app felt stuck after a tap. An in-flight
+  // refresh is shared rather than duplicated; the data it fetches is current.
+  const refreshInFlight = useRef<Promise<void> | null>(null);
   const refreshConnections = useCallback(async () => {
-    dispatch(connectionsLoading());
-    try {
-      const { pairings: list } = await pairingApi.list();
-      dispatch(pairingsLoaded(list));
+    if (refreshInFlight.current) return refreshInFlight.current;
+    const run = (async () => {
+      dispatch(connectionsLoading());
+      try {
+        const { pairings: list } = await pairingApi.list();
+        dispatch(pairingsLoaded(list));
 
-      await Promise.all(
-        list.map(async (p) => {
-          try {
-            const snapshot = await privacyApi.get(p.id);
-            dispatch(snapshotReceived({ pairingId: p.id, snapshot }));
-            await subscribeToPairing(p.id);
-          } catch {
-            /* one unreadable connection must not blank the whole screen */
-          }
-        }),
-      );
-    } catch {
-      dispatch(connectionsFailed('Could not load your connections.'));
+        await Promise.all(
+          list.map(async (p) => {
+            try {
+              const snapshot = await privacyApi.get(p.id);
+              dispatch(snapshotReceived({ pairingId: p.id, snapshot }));
+              await subscribeToPairing(p.id);
+            } catch {
+              /* one unreadable connection must not blank the whole screen */
+            }
+          }),
+        );
+      } catch {
+        dispatch(connectionsFailed('Could not load your connections.'));
+      }
+    })();
+    refreshInFlight.current = run;
+    try {
+      await run;
+    } finally {
+      refreshInFlight.current = null;
     }
   }, [dispatch]);
 

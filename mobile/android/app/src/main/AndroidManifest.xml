@@ -13,6 +13,15 @@
          the disclosure notification is not optional to this product. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Restart the DISCLOSED foreground service after a reboot, so protection
+         resumes under the same visible notification without the user reopening
+         the app. Paired with GuardianBootReceiver below. Nothing starts
+         silently: the service re-posts its ongoing notification on restart, and
+         it only restarts when the user left the master toggle on. WorkManager
+         (the watchdog) self-registers its own components and WAKE_LOCK via
+         manifest merge, so neither is declared here by hand. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -52,6 +61,20 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location|camera|microphone" />
+
+        <!-- Re-launches the foreground service after a device reboot or an app
+             update, but ONLY when protection was left enabled (the master
+             toggle, read from a persisted flag). It never starts capture; the
+             service it starts shows the same ongoing disclosure notification. -->
+        <receiver
+            android:name="com.guardianmobile.service.GuardianBootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>
