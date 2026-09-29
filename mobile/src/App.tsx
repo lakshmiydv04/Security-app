@@ -28,6 +28,7 @@ import {
   connectSocket,
   disconnectSocket,
   reportIndicator,
+  startHeartbeat,
   subscribeToPairing,
 } from './realtime/socket';
 import { createIndicatorSync } from './realtime/indicatorSync';
@@ -215,8 +216,17 @@ function Root(): React.JSX.Element {
       },
     });
 
+    // Liveness ping. Keeps the socket warm behind carrier NAT while the
+    // foreground service holds the app alive in the background, and feeds the
+    // dashboard's "last seen" clock. The server's own transport-drop detection
+    // is what actually flags a dead device.
+    const stopHeartbeat = startHeartbeat();
+
     void refreshConnections();
-    return () => disconnectSocket();
+    return () => {
+      stopHeartbeat();
+      disconnectSocket();
+    };
   }, [authStatus, accessToken, dispatch, refreshConnections, endStream]);
 
   // Location loop. Gated per pairing by the same rule the server enforces.

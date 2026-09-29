@@ -1,0 +1,9 @@
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/CMakeFiles/appmodules.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/RNKeychainSpec_autolinked_build/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/RNKeychainSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
+D:/down/app/mobile/android/app/.cxx/RelWithDebInfo/y6c382w5/armeabi-v7a/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir

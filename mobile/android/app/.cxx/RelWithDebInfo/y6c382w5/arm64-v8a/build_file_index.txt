@@ -1,0 +1,3 @@
+D:\down\app\mobile\node_modules\react-native-keychain\android\build\generated\source\codegen\jni\CMakeLists.txt
+D:\down\app\mobile\node_modules\react-native-safe-area-context\android\src\main\jni\CMakeLists.txt
+D:\down\app\mobile\node_modules\react-native\ReactAndroid\cmake-utils\default-app-setup\CMakeLists.txt

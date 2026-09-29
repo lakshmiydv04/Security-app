@@ -1,8 +1,8 @@
 /**
  * Runtime configuration.
  *
- * A release build reads the API URL from native build config, so it cannot
- * accidentally ship pointing at somebody's laptop.
+ * A release build points at the deployed API, so it cannot accidentally ship
+ * pointing at somebody's laptop.
  *
  * A debug build has no such config, so we derive the host from the Metro dev
  * server - the one address the phone is demonstrably able to reach, since it
@@ -35,6 +35,16 @@ import getDevServer from 'react-native/Libraries/Core/Devtools/getDevServer';
  */
 const MANUAL_API_URL: string | null = null;
 
+/**
+ * The deployed API. Used by every build that is not a development build.
+ *
+ * A release APK has no Metro server to ask, so there is nothing to derive a
+ * host from - it needs a real address compiled in. Keep this HTTPS: release
+ * builds do not carry the debug manifest's cleartext permission, so a plain
+ * http:// address here fails at runtime with no useful error.
+ */
+const PRODUCTION_API_URL = 'https://guardian-backend-z16n.onrender.com';
+
 /** Port the Guardian API listens on in development. */
 const DEV_API_PORT = 4000;
 
@@ -63,6 +73,11 @@ function resolve(): { url: string; source: string } {
 
   if (buildConfig.GUARDIAN_API_URL) {
     return { url: buildConfig.GUARDIAN_API_URL, source: 'native build config' };
+  }
+
+  // Not a dev build: there is no Metro to ask, so use the deployed API.
+  if (!__DEV__) {
+    return { url: PRODUCTION_API_URL, source: 'production' };
   }
 
   if (__DEV__) {

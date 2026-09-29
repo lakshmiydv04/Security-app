@@ -13,6 +13,7 @@ import { geofenceRoutes } from './routes/geofence.routes.js';
 import { sosRoutes } from './routes/sos.routes.js';
 import { auditRoutes } from './routes/audit.routes.js';
 import { rtcRoutes } from './routes/rtc.routes.js';
+import { deviceRoutes } from './routes/device.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 
 export function createApp(): Express {
@@ -42,6 +43,7 @@ export function createApp(): Express {
         health: '/health',
         auth: '/api/auth/{register,login,refresh,logout}',
         pairings: '/api/pairings',
+        device: '/api/device/connection-lost',
         realtime: 'socket.io on this same origin',
       },
     });
@@ -60,6 +62,7 @@ export function createApp(): Express {
   app.use('/api', sosRoutes);
   app.use('/api', auditRoutes);
   app.use('/api', rtcRoutes);
+  app.use('/api', deviceRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

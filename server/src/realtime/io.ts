@@ -1,13 +1,17 @@
 /**
  * Socket.io signalling.
  *
- * Two jobs:
+ * Three jobs:
  *   1. Route guardian commands to the target device - always through the same
  *      server-side privacy gate the REST routes use. A socket is not a
  *      shortcut past enforcement.
  *   2. Push privacy-state changes to guardians the instant they happen, so the
  *      dashboard disables its own buttons rather than firing commands at a
  *      device that will refuse them.
+ *   3. Tell guardians when a monitored device connection appears or drops, so a
+ *      device that is swiped away or killed does not go dark silently. This
+ *      rides Socket.IO's own keepalive, so it works even when the device gets
+ *      no chance to report anything.
  */
 
 import type { Server as HttpServer } from 'node:http';
@@ -22,6 +26,8 @@ import { requireParticipant } from '../http/guards.js';
 import { clearEmitter, registerEmitter } from './emitter.js';
 import { pairingRoom, userRoom } from './rooms.js';
 import { endCallsNoLongerPermitted, registerRtcHandlers } from './rtc-signalling.js';
+import { notifyDevicePresence } from './device-presence.js';
+import { markSeen } from './last-seen.js';
 
 export interface RealtimeServer {
   io: Server;
@@ -35,6 +41,13 @@ export function attachRealtime(httpServer: HttpServer): RealtimeServer {
 
   const io = new Server(httpServer, {
     cors: { origin: env.CORS_ORIGIN.split(',').map((s) => s.trim()), credentials: true },
+    // Tightened from the defaults (25s / 20s) so a device whose process is
+    // killed - the exact case a safety app must catch - is detected as gone in
+    // ~30s rather than ~45s. The foreground service keeps the process (and this
+    // socket) alive while the app is merely backgrounded, so a live device does
+    // not trip these.
+    pingInterval: 20_000,
+    pingTimeout: 10_000,
   });
 
   io.use((socket, next) => {
@@ -56,15 +69,52 @@ export function attachRealtime(httpServer: HttpServer): RealtimeServer {
 
   io.on('connection', (socket: Socket) => {
     const userId = socket.data.userId as string;
-    void presence.addSocket(userId, socket.id);
+
+    // Presence transition -> tell guardians the moment a monitored device
+    // appears. The online check runs BEFORE this socket is added, so a second
+    // tab or a quick reconnect does not fire a spurious "online" the guardian
+    // would see as a flap.
+    void (async () => {
+      try {
+        const wasOnline = await presence.isOnline(userId);
+        await presence.addSocket(userId, socket.id);
+        markSeen(userId);
+        if (!wasOnline) {
+          await notifyDevicePresence(userId, true, 'CONNECTED');
+        }
+      } catch (err) {
+        logger.warn({ err, userId }, 'online presence handling failed');
+      }
+    })();
+
     void socket.join(userRoom(userId));
 
     // WebRTC offer/answer/ICE relay. Media never touches this server.
     registerRtcHandlers(io, socket, userId);
 
     socket.on('disconnect', () => {
-      void presence.removeSocket(userId, socket.id);
+      // Presence transition -> tell guardians when the LAST socket for this
+      // user goes away. This is the authoritative "device went dark" signal:
+      // it fires whether the app was force-stopped, lost signal, or died with
+      // its battery, none of which send a beacon.
+      void (async () => {
+        try {
+          await presence.removeSocket(userId, socket.id);
+          const stillOnline = await presence.isOnline(userId);
+          if (!stillOnline) {
+            await notifyDevicePresence(userId, false, 'DISCONNECTED');
+          }
+        } catch (err) {
+          logger.warn({ err, userId }, 'offline presence handling failed');
+        }
+      })();
     });
+
+    // Application-level liveness ping from the device. Socket.IO's own ping is
+    // what DETECTS a dead device; this only refreshes the "last seen" clock the
+    // dashboard shows and keeps a mobile carrier's NAT from reaping an idle
+    // socket while the foreground service holds the app alive in the background.
+    socket.on('device:heartbeat', () => markSeen(userId));
 
     /** Device or dashboard subscribes to a pairing it belongs to. */
     socket.on('pairing:subscribe', async (raw: unknown, ack?: (r: unknown) => void) => {

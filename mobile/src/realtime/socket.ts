@@ -105,6 +105,27 @@ export function reportIndicator(
   socket?.emit('indicator:state', { pairingId, kind, active });
 }
 
+/**
+ * Application-level liveness ping.
+ *
+ * This is NOT what tells the server a device has gone dark - the server detects
+ * that from the transport drop (server/src/realtime/io.ts), which fires even
+ * when the app is force-stopped and never gets to run this. Its jobs are
+ * smaller and real:
+ *   - it keeps a mobile carrier's NAT from silently reaping an idle socket
+ *     while the foreground service holds the app alive in the background, and
+ *   - it feeds the dashboard's "last seen 12s ago" clock.
+ *
+ * Start it when a signed-in socket comes up, stop it (returned function) when
+ * the socket is torn down.
+ */
+export function startHeartbeat(intervalMs = 20_000): () => void {
+  const id = setInterval(() => {
+    socket?.emit('device:heartbeat', { at: new Date().toISOString() });
+  }, intervalMs);
+  return () => clearInterval(id);
+}
+
 export function disconnectSocket(): void {
   socket?.removeAllListeners();
   socket?.disconnect();
